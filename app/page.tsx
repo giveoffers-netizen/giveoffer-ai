@@ -34,10 +34,7 @@ export default function Home() {
 
   return (
     <main style={styles.page}>
-      <header style={styles.header}>
-        <div style={styles.brand}>GiveOffer</div>
-        <a href="https://giveoffer.com" style={styles.navLink}>Main Website</a>
-      </header>
+      
 
       <section style={styles.hero}>
         <div style={styles.badge}>AI Product Search</div>
@@ -110,25 +107,7 @@ const styles: any = {
     fontFamily: 'Arial, sans-serif',
     color: '#1f2933',
   },
-  header: {
-    maxWidth: 1200,
-    margin: '0 auto',
-    padding: '28px 32px',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  brand: {
-    fontSize: 26,
-    fontWeight: 800,
-    color: '#1f2933',
-  },
-  navLink: {
-    color: '#9a6b43',
-    textDecoration: 'none',
-    fontWeight: 700,
-  },
-  hero: {
+   hero: {
     maxWidth: 950,
     margin: '0 auto',
     padding: '70px 24px 55px',
