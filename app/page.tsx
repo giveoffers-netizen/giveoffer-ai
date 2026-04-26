@@ -1,14 +1,16 @@
-import SearchForm from "../components/SearchForm";
-
 export default function Home() {
   return (
-    <main className="container">
-      <section className="hero">
-        <div className="logo">GiveOffer AI</div>
-        <h1 className="title">Ask once. Get the best offer.</h1>
-        <p className="subtitle">Search any product and let AI compare prices, ratings, shipping, and value across the web.</p>
-        <SearchForm />
-      </section>
+    <main style={{ padding: 40, fontFamily: "Arial" }}>
+      <h1>GiveOffer AI</h1>
+      <p>AI product search app is live.</p>
+
+      <form>
+        <input
+          placeholder="Search product..."
+          style={{ padding: 12, width: 300, marginRight: 10 }}
+        />
+        <button style={{ padding: 12 }}>Search</button>
+      </form>
     </main>
   );
 }
