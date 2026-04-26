@@ -11,7 +11,6 @@ export default function Home() {
 
   const searchProducts = async (searchQuery: string, pageNumber: number) => {
     if (!searchQuery.trim()) return;
-
     setLoading(true);
 
     const res = await fetch('/api/search', {
@@ -25,40 +24,37 @@ export default function Home() {
     setLastQuery(searchQuery);
     setPage(pageNumber);
     setLoading(false);
-
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSearch = async (e: any) => {
+  const handleSearch = (e: any) => {
     e.preventDefault();
     searchProducts(query, 1);
   };
 
-  const goNext = () => {
-    searchProducts(lastQuery || query, page + 1);
-  };
-
-  const goPrevious = () => {
-    if (page > 1) {
-      searchProducts(lastQuery || query, page - 1);
-    }
-  };
-
   return (
     <main style={styles.page}>
+      <header style={styles.header}>
+        <div style={styles.brand}>GiveOffer</div>
+        <a href="https://giveoffer.com" style={styles.navLink}>Main Website</a>
+      </header>
+
       <section style={styles.hero}>
-        <h1 style={styles.logo}>GiveOffer AI</h1>
-        <p style={styles.subtitle}>Find the best product offers instantly.</p>
+        <div style={styles.badge}>AI Product Search</div>
+        <h1 style={styles.logo}>Find the Best Offer Online</h1>
+        <p style={styles.subtitle}>
+          Search any product and compare real prices, stores, and offers instantly.
+        </p>
 
         <form onSubmit={handleSearch} style={styles.searchBox}>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search product..."
+            placeholder="Search products, brands, or deals..."
             style={styles.input}
           />
           <button style={styles.button} disabled={loading}>
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? 'Searching...' : 'Search Offers'}
           </button>
         </form>
       </section>
@@ -66,18 +62,16 @@ export default function Home() {
       <section style={styles.grid}>
         {results.map((item, i) => (
           <div key={i} style={styles.card}>
-            {item.image && (
-              <img src={item.image} alt={item.title} style={styles.image} />
-            )}
+            {item.image && <img src={item.image} alt={item.title} style={styles.image} />}
 
             <div style={styles.cardBody}>
+              <p style={styles.store}>{item.store}</p>
               <h3 style={styles.title}>{item.title}</h3>
               <p style={styles.price}>{item.price}</p>
-              <p style={styles.store}>{item.store}</p>
               <p style={styles.reason}>{item.reason}</p>
 
               <a href={item.url} target="_blank" style={styles.link}>
-                View Offer →
+                View Offer
               </a>
             </div>
           </div>
@@ -87,21 +81,21 @@ export default function Home() {
       {results.length > 0 && (
         <div style={styles.pagination}>
           <button
-            onClick={goPrevious}
+            onClick={() => searchProducts(lastQuery || query, page - 1)}
             disabled={page <= 1 || loading}
-            style={{
-              ...styles.pageButton,
-              opacity: page <= 1 ? 0.5 : 1,
-              cursor: page <= 1 ? 'not-allowed' : 'pointer',
-            }}
+            style={styles.pageButton}
           >
-            ← Previous
+            Previous
           </button>
 
           <span style={styles.pageText}>Page {page}</span>
 
-          <button onClick={goNext} disabled={loading} style={styles.pageButton}>
-            Next →
+          <button
+            onClick={() => searchProducts(lastQuery || query, page + 1)}
+            disabled={loading}
+            style={styles.pageButton}
+          >
+            Next
           </button>
         </div>
       )}
@@ -112,124 +106,150 @@ export default function Home() {
 const styles: any = {
   page: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #eef4ff, #f8fafc)',
-    padding: '40px',
+    background: '#f7f3ec',
     fontFamily: 'Arial, sans-serif',
-    color: '#0f172a',
+    color: '#1f2933',
+  },
+  header: {
+    maxWidth: 1200,
+    margin: '0 auto',
+    padding: '28px 32px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  brand: {
+    fontSize: 26,
+    fontWeight: 800,
+    color: '#1f2933',
+  },
+  navLink: {
+    color: '#9a6b43',
+    textDecoration: 'none',
+    fontWeight: 700,
   },
   hero: {
-    maxWidth: '900px',
-    margin: '0 auto 40px auto',
+    maxWidth: 950,
+    margin: '0 auto',
+    padding: '70px 24px 55px',
     textAlign: 'center',
   },
+  badge: {
+    display: 'inline-block',
+    padding: '10px 18px',
+    borderRadius: 999,
+    background: '#efe2d0',
+    color: '#9a6b43',
+    fontWeight: 700,
+    marginBottom: 18,
+  },
   logo: {
-    fontSize: '48px',
-    marginBottom: '10px',
-    color: '#0f172a',
+    fontSize: 56,
+    lineHeight: 1.05,
+    margin: '0 0 18px',
   },
   subtitle: {
-    fontSize: '20px',
-    color: '#475569',
-    marginBottom: '30px',
+    fontSize: 21,
+    color: '#5f6c7b',
+    marginBottom: 34,
   },
   searchBox: {
     display: 'flex',
     justifyContent: 'center',
-    gap: '12px',
+    gap: 12,
     flexWrap: 'wrap',
   },
   input: {
-    width: '420px',
+    width: 520,
     maxWidth: '100%',
-    padding: '16px',
-    borderRadius: '12px',
-    border: '1px solid #cbd5e1',
-    fontSize: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+    padding: '18px 20px',
+    borderRadius: 14,
+    border: '1px solid #ded2c4',
+    fontSize: 16,
+    background: '#fff',
   },
   button: {
-    padding: '16px 26px',
-    borderRadius: '12px',
+    padding: '18px 28px',
+    borderRadius: 14,
     border: 'none',
-    background: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    background: '#9a6b43',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 800,
     cursor: 'pointer',
   },
   grid: {
-    maxWidth: '1200px',
+    maxWidth: 1200,
     margin: '0 auto',
+    padding: '0 32px 50px',
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-    gap: '24px',
+    gap: 26,
   },
   card: {
-    background: 'white',
-    borderRadius: '18px',
+    background: '#fff',
+    borderRadius: 24,
     overflow: 'hidden',
-    boxShadow: '0 10px 25px rgba(15, 23, 42, 0.10)',
-    border: '1px solid #e2e8f0',
+    boxShadow: '0 18px 45px rgba(55, 39, 24, 0.10)',
+    border: '1px solid #eadfD2',
   },
   image: {
     width: '100%',
-    height: '200px',
+    height: 220,
     objectFit: 'contain',
-    background: '#f8fafc',
-    padding: '16px',
+    background: '#fbf8f3',
+    padding: 18,
   },
   cardBody: {
-    padding: '20px',
-  },
-  title: {
-    fontSize: '18px',
-    marginBottom: '12px',
-    lineHeight: '1.3',
-  },
-  price: {
-    fontSize: '22px',
-    fontWeight: 'bold',
-    color: '#16a34a',
-    marginBottom: '6px',
+    padding: 22,
   },
   store: {
-    color: '#475569',
-    marginBottom: '12px',
+    color: '#9a6b43',
+    fontWeight: 700,
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 18,
+    lineHeight: 1.35,
+    minHeight: 72,
+  },
+  price: {
+    fontSize: 24,
+    fontWeight: 900,
+    color: '#16803c',
   },
   reason: {
-    fontSize: '14px',
-    color: '#64748b',
-    minHeight: '40px',
+    color: '#667085',
+    fontSize: 14,
+    minHeight: 44,
   },
   link: {
     display: 'inline-block',
-    marginTop: '14px',
-    padding: '12px 16px',
-    background: '#0f172a',
-    color: 'white',
-    borderRadius: '10px',
+    marginTop: 14,
+    padding: '13px 18px',
+    background: '#1f2933',
+    color: '#fff',
+    borderRadius: 12,
     textDecoration: 'none',
-    fontWeight: 'bold',
+    fontWeight: 800,
   },
   pagination: {
-    marginTop: '45px',
+    padding: '0 0 60px',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: '18px',
+    gap: 18,
   },
   pageButton: {
     padding: '14px 22px',
-    borderRadius: '12px',
+    borderRadius: 12,
     border: 'none',
-    background: '#2563eb',
-    color: 'white',
-    fontSize: '16px',
-    fontWeight: 'bold',
+    background: '#9a6b43',
+    color: '#fff',
+    fontWeight: 800,
     cursor: 'pointer',
   },
   pageText: {
-    fontSize: '18px',
-    fontWeight: 'bold',
+    fontWeight: 800,
   },
 };
