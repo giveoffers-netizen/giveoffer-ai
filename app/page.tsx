@@ -4,22 +4,44 @@ import { useState } from 'react';
 
 export default function Home() {
   const [query, setQuery] = useState('');
+  const [lastQuery, setLastQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const handleSearch = async (e: any) => {
-    e.preventDefault();
+  const searchProducts = async (searchQuery: string, pageNumber: number) => {
+    if (!searchQuery.trim()) return;
+
     setLoading(true);
 
     const res = await fetch('/api/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query: searchQuery, page: pageNumber }),
     });
 
     const data = await res.json();
     setResults(data.offers || []);
+    setLastQuery(searchQuery);
+    setPage(pageNumber);
     setLoading(false);
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearch = async (e: any) => {
+    e.preventDefault();
+    searchProducts(query, 1);
+  };
+
+  const goNext = () => {
+    searchProducts(lastQuery || query, page + 1);
+  };
+
+  const goPrevious = () => {
+    if (page > 1) {
+      searchProducts(lastQuery || query, page - 1);
+    }
   };
 
   return (
@@ -35,7 +57,7 @@ export default function Home() {
             placeholder="Search product..."
             style={styles.input}
           />
-          <button style={styles.button}>
+          <button style={styles.button} disabled={loading}>
             {loading ? 'Searching...' : 'Search'}
           </button>
         </form>
@@ -50,11 +72,8 @@ export default function Home() {
 
             <div style={styles.cardBody}>
               <h3 style={styles.title}>{item.title}</h3>
-
               <p style={styles.price}>{item.price}</p>
-
               <p style={styles.store}>{item.store}</p>
-
               <p style={styles.reason}>{item.reason}</p>
 
               <a href={item.url} target="_blank" style={styles.link}>
@@ -64,6 +83,28 @@ export default function Home() {
           </div>
         ))}
       </section>
+
+      {results.length > 0 && (
+        <div style={styles.pagination}>
+          <button
+            onClick={goPrevious}
+            disabled={page <= 1 || loading}
+            style={{
+              ...styles.pageButton,
+              opacity: page <= 1 ? 0.5 : 1,
+              cursor: page <= 1 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            ← Previous
+          </button>
+
+          <span style={styles.pageText}>Page {page}</span>
+
+          <button onClick={goNext} disabled={loading} style={styles.pageButton}>
+            Next →
+          </button>
+        </div>
+      )}
     </main>
   );
 }
@@ -168,6 +209,27 @@ const styles: any = {
     color: 'white',
     borderRadius: '10px',
     textDecoration: 'none',
+    fontWeight: 'bold',
+  },
+  pagination: {
+    marginTop: '45px',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '18px',
+  },
+  pageButton: {
+    padding: '14px 22px',
+    borderRadius: '12px',
+    border: 'none',
+    background: '#2563eb',
+    color: 'white',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+  },
+  pageText: {
+    fontSize: '18px',
     fontWeight: 'bold',
   },
 };
