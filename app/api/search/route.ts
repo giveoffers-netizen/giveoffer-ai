@@ -14,10 +14,16 @@ type Offer = {
 
 export async function POST(req: NextRequest) {
   try {
-    const { query } = await req.json();
+    const body = await req.json();
+    const query = body.query;
+    const page = Number(body.page || 1);
+    const start = (page - 1) * 12;
 
     if (!query) {
-      return NextResponse.json({ error: "Missing search query" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing search query" },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.SERPAPI_KEY;
@@ -35,6 +41,7 @@ export async function POST(req: NextRequest) {
     url.searchParams.set("api_key", apiKey);
     url.searchParams.set("gl", "us");
     url.searchParams.set("hl", "en");
+    url.searchParams.set("start", String(start));
 
     const response = await fetch(url.toString(), {
       next: { revalidate: 300 },
@@ -58,6 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       query,
+      page,
       offers,
     });
   } catch (error) {
