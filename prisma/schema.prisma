@@ -1,0 +1,27 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite" url = env("DATABASE_URL") }
+
+model Search {
+  id        Int      @id @default(autoincrement())
+  query     String
+  product   String?
+  filters   String?
+  createdAt DateTime @default(now())
+  offers    Offer[]
+}
+
+model Offer {
+  id        Int      @id @default(autoincrement())
+  searchId  Int
+  title     String
+  price     Float?
+  store     String?
+  url       String
+  image     String?
+  rating    Float?
+  reviews   Int?
+  aiScore   Float?
+  reason    String?
+  createdAt DateTime @default(now())
+  search    Search   @relation(fields: [searchId], references: [id])
+}
