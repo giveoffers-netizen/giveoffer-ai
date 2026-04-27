@@ -23,26 +23,12 @@ export default function Home() {
       body: JSON.stringify({ query: searchQuery, page: pageNumber }),
     });
 
-   const data = await res.json();
+    const data = await res.json();
 
-if (data.extractedText) {
-  const analyzeRes = await fetch('/api/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: data.extractedText }),
-  });
-
-  const analyzeData = await analyzeRes.json();
-
-  setUploadResult({
-    ...data,
-    analysis: analyzeData.analysis,
-  });
-} else {
-  setUploadResult(data);
-}
-
-setUploading(false);
+    setResults(data.offers || []);
+    setLastQuery(searchQuery);
+    setPage(pageNumber);
+    setLoading(false);
   };
 
   const handleSearch = (e: any) => {
@@ -66,7 +52,24 @@ setUploading(false);
     });
 
     const data = await res.json();
-    setUploadResult(data);
+
+    if (data.extractedText) {
+      const analyzeRes = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: data.extractedText }),
+      });
+
+      const analyzeData = await analyzeRes.json();
+
+      setUploadResult({
+        ...data,
+        analysis: analyzeData.analysis,
+      });
+    } else {
+      setUploadResult(data);
+    }
+
     setUploading(false);
   };
 
@@ -92,7 +95,7 @@ setUploading(false);
             style={styles.fileInput}
           />
 
-          {uploading && <p style={styles.status}>Reading your quote...</p>}
+          {uploading && <p style={styles.status}>Reading and analyzing your quote...</p>}
 
           {uploadResult && (
             <div style={styles.resultBox}>
@@ -100,6 +103,32 @@ setUploading(false);
               <br />
               <strong>Status:</strong> Uploaded successfully
               <br />
+              <br />
+
+              {uploadResult.analysis && (
+                <div>
+                  <h3>AI Found These Items</h3>
+
+                  <p><strong>Vendor:</strong> {uploadResult.analysis.vendor || 'Not found'}</p>
+                  <p><strong>Total:</strong> {uploadResult.analysis.total || 'Not found'}</p>
+
+                  {(uploadResult.analysis.items || []).map((item: any, index: number) => (
+                    <div key={index} style={styles.itemBox}>
+                      <strong>{item.name}</strong>
+                      <p>Quantity: {item.quantity || 'N/A'}</p>
+                      <p>Price: {item.price || 'N/A'}</p>
+
+                      <button
+                        style={styles.button}
+                        onClick={() => searchProducts(item.searchQuery || item.name, 1)}
+                      >
+                        Find Better Price
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <br />
               <strong>Extracted Text:</strong>
               <pre style={styles.pre}>
@@ -235,6 +264,13 @@ const styles: any = {
     background: '#fbf8f3',
     borderRadius: 16,
     padding: 20,
+  },
+  itemBox: {
+    marginTop: 16,
+    padding: 16,
+    background: '#fff',
+    borderRadius: 12,
+    border: '1px solid #eadfd2',
   },
   pre: {
     whiteSpace: 'pre-wrap',
