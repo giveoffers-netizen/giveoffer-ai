@@ -24,18 +24,19 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: "gpt-4o-mini",
         temperature: 0,
+        response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
             content:
-              "You extract products from quotes, invoices, bills, and receipts. Return only valid JSON.",
+              "You extract products/services from quotes, invoices, bills, and receipts. Return only valid JSON.",
           },
           {
             role: "user",
             content: `
 Extract products/services from this quote text.
 
-Return JSON only in this format:
+Return JSON only in this exact format:
 {
   "vendor": "vendor name if found",
   "total": "total price if found",
@@ -58,13 +59,26 @@ ${text}
     });
 
     const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json(
+        { error: data.error?.message || "OpenAI request failed" },
+        { status: 500 }
+      );
+    }
+
     const content = data.choices?.[0]?.message?.content || "{}";
 
     let parsed;
     try {
       parsed = JSON.parse(content);
     } catch {
-      parsed = { raw: content };
+      parsed = {
+        vendor: "",
+        total: "",
+        items: [],
+        raw: content,
+      };
     }
 
     return NextResponse.json({
