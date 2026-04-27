@@ -9,8 +9,12 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
 
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<any>(null);
+
   const searchProducts = async (searchQuery: string, pageNumber: number) => {
     if (!searchQuery.trim()) return;
+
     setLoading(true);
 
     const res = await fetch('/api/search', {
@@ -24,7 +28,6 @@ export default function Home() {
     setLastQuery(searchQuery);
     setPage(pageNumber);
     setLoading(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSearch = (e: any) => {
@@ -32,24 +35,73 @@ export default function Home() {
     searchProducts(query, 1);
   };
 
+  const handleUpload = async (e: any) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const data = await res.json();
+    setUploadResult(data);
+    setUploading(false);
+  };
+
   return (
     <main style={styles.page}>
-      
-
       <section style={styles.hero}>
-        <div style={styles.badge}>AI Product Search</div>
-        <h1 style={styles.logo}>Find the Best Offer Online</h1>
+        <div style={styles.badge}>AI Quote Comparison</div>
+
+        <h1 style={styles.logo}>Upload any quote. Find a better offer.</h1>
+
         <p style={styles.subtitle}>
-          Search any product and compare real prices, stores, and offers instantly.
+          Upload a bill, quote, invoice, or search products directly.
         </p>
+
+        <div style={styles.uploadBox}>
+          <h2 style={styles.uploadTitle}>Upload Quote</h2>
+          <p style={styles.uploadText}>PDF, invoice, screenshot, or quote file</p>
+
+          <input
+            type="file"
+            accept=".pdf,image/*"
+            onChange={handleUpload}
+            style={styles.fileInput}
+          />
+
+          {uploading && <p style={styles.status}>Reading your quote...</p>}
+
+          {uploadResult && (
+            <div style={styles.resultBox}>
+              <strong>File:</strong> {uploadResult.fileName}
+              <br />
+              <strong>Status:</strong> Uploaded successfully
+              <br />
+              <br />
+              <strong>Extracted Text:</strong>
+              <pre style={styles.pre}>
+                {uploadResult.extractedText || uploadResult.error}
+              </pre>
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSearch} style={styles.searchBox}>
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products, brands, or deals..."
+            placeholder="Or search products, brands, or deals..."
             style={styles.input}
           />
+
           <button style={styles.button} disabled={loading}>
             {loading ? 'Searching...' : 'Search Offers'}
           </button>
@@ -59,7 +111,9 @@ export default function Home() {
       <section style={styles.grid}>
         {results.map((item, i) => (
           <div key={i} style={styles.card}>
-            {item.image && <img src={item.image} alt={item.title} style={styles.image} />}
+            {item.image && (
+              <img src={item.image} alt={item.title} style={styles.image} />
+            )}
 
             <div style={styles.cardBody}>
               <p style={styles.store}>{item.store}</p>
@@ -107,7 +161,7 @@ const styles: any = {
     fontFamily: 'Arial, sans-serif',
     color: '#1f2933',
   },
-   hero: {
+  hero: {
     maxWidth: 950,
     margin: '0 auto',
     padding: '70px 24px 55px',
@@ -123,7 +177,7 @@ const styles: any = {
     marginBottom: 18,
   },
   logo: {
-    fontSize: 56,
+    fontSize: 52,
     lineHeight: 1.05,
     margin: '0 0 18px',
   },
@@ -131,6 +185,47 @@ const styles: any = {
     fontSize: 21,
     color: '#5f6c7b',
     marginBottom: 34,
+  },
+  uploadBox: {
+    background: '#fff',
+    borderRadius: 24,
+    padding: 30,
+    marginBottom: 30,
+    boxShadow: '0 18px 45px rgba(55, 39, 24, 0.10)',
+    border: '1px solid #eadfd2',
+  },
+  uploadTitle: {
+    margin: 0,
+    fontSize: 26,
+  },
+  uploadText: {
+    color: '#667085',
+  },
+  fileInput: {
+    marginTop: 16,
+    padding: 16,
+    border: '1px dashed #9a6b43',
+    borderRadius: 14,
+    background: '#fbf8f3',
+    width: '100%',
+    maxWidth: 520,
+  },
+  status: {
+    color: '#9a6b43',
+    fontWeight: 700,
+  },
+  resultBox: {
+    marginTop: 20,
+    textAlign: 'left',
+    background: '#fbf8f3',
+    borderRadius: 16,
+    padding: 20,
+  },
+  pre: {
+    whiteSpace: 'pre-wrap',
+    fontSize: 13,
+    maxHeight: 260,
+    overflow: 'auto',
   },
   searchBox: {
     display: 'flex',
@@ -170,7 +265,7 @@ const styles: any = {
     borderRadius: 24,
     overflow: 'hidden',
     boxShadow: '0 18px 45px rgba(55, 39, 24, 0.10)',
-    border: '1px solid #eadfD2',
+    border: '1px solid #eadfd2',
   },
   image: {
     width: '100%',
@@ -185,12 +280,10 @@ const styles: any = {
   store: {
     color: '#9a6b43',
     fontWeight: 700,
-    marginBottom: 8,
   },
   title: {
     fontSize: 18,
     lineHeight: 1.35,
-    minHeight: 72,
   },
   price: {
     fontSize: 24,
@@ -200,7 +293,6 @@ const styles: any = {
   reason: {
     color: '#667085',
     fontSize: 14,
-    minHeight: 44,
   },
   link: {
     display: 'inline-block',
