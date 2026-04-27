@@ -23,11 +23,26 @@ export default function Home() {
       body: JSON.stringify({ query: searchQuery, page: pageNumber }),
     });
 
-    const data = await res.json();
-    setResults(data.offers || []);
-    setLastQuery(searchQuery);
-    setPage(pageNumber);
-    setLoading(false);
+   const data = await res.json();
+
+if (data.extractedText) {
+  const analyzeRes = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: data.extractedText }),
+  });
+
+  const analyzeData = await analyzeRes.json();
+
+  setUploadResult({
+    ...data,
+    analysis: analyzeData.analysis,
+  });
+} else {
+  setUploadResult(data);
+}
+
+setUploading(false);
   };
 
   const handleSearch = (e: any) => {
