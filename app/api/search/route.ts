@@ -20,10 +20,7 @@ export async function POST(req: NextRequest) {
     const start = (page - 1) * 12;
 
     if (!query) {
-      return NextResponse.json(
-        { error: "Missing search query" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing search query" }, { status: 400 });
     }
 
     const apiKey = process.env.SERPAPI_KEY;
@@ -63,18 +60,10 @@ export async function POST(req: NextRequest) {
         reason: makeReason(item),
       }));
 
-    return NextResponse.json({
-      query,
-      page,
-      offers,
-    });
+    return NextResponse.json({ query, page, offers });
   } catch (error) {
     console.error("Search error:", error);
-
-    return NextResponse.json(
-      { error: "Search failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
 }
 
@@ -86,7 +75,5 @@ function makeReason(item: any) {
   if (item.reviews) parts.push(`${item.reviews} reviews`);
   if (item.delivery) parts.push(item.delivery);
 
-  return parts.length
-    ? parts.join(" • ")
-    : "Matched your product search.";
+  return parts.length ? parts.join(" • ") : "Matched your product search.";
 }
