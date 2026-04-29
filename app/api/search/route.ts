@@ -1,67 +1,79 @@
 import { NextRequest, NextResponse } from "next/server";
-import pdfParse from "pdf-parse";
+
+type Offer = {
+  title: string;
+  price: string;
+  store: string;
+  url: string;
+  image: string;
+  rating: number | null;
+  reviews: number | null;
+  delivery: string;
+  reason: string;
+};
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    const body = await req.json();
+    const query = body.query;
+    const page = Number(body.page || 1);
+    const start = (page - 1) * 12;
 
-    if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    if (!query) {
+      return NextResponse.json({ error: "Missing search query" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const apiKey = process.env.SERPAPI_KEY;
 
-    let extractedText = "";
-
-    // ✅ PDF
-    if (file.type === "application/pdf") {
-      const pdf = await pdfParse(buffer);
-      extractedText = pdf.text;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Missing SERPAPI_KEY in Vercel Environment Variables" },
+        { status: 500 }
+      );
     }
 
-    // ✅ IMAGE (NEW 🔥)
-    else if (file.type.startsWith("image/")) {
-      const base64 = buffer.toString("base64");
+    const url = new URL("https://serpapi.com/search.json");
+    url.searchParams.set("engine", "google_shopping");
+    url.searchParams.set("q", query);
+    url.searchParams.set("api_key", apiKey);
+    url.searchParams.set("gl", "us");
+    url.searchParams.set("hl", "en");
+    url.searchParams.set("start", String(start));
 
-      const res = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: "Extract all text from this invoice or quote clearly." },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${file.type};base64,${base64}`
-                  }
-                }
-              ]
-            }
-          ]
-        })
-      });
-
-      const data = await res.json();
-      extractedText = data.choices?.[0]?.message?.content || "No text found";
-    }
-
-    return NextResponse.json({
-      success: true,
-      fileName: file.name,
-      extractedText: extractedText.slice(0, 3000),
+    const response = await fetch(url.toString(), {
+      next: { revalidate: 300 },
     });
 
+    const data = await response.json();
+
+    const offers: Offer[] = (data.shopping_results || [])
+      .slice(0, 12)
+      .map((item: any) => ({
+        title: item.title || "Untitled result",
+        price: item.price || "Price not shown",
+        store: item.source || "Unknown store",
+        url: item.link || item.product_link || "#",
+        image: item.thumbnail || "",
+        rating: item.rating || null,
+        reviews: item.reviews || null,
+        delivery: item.delivery || "",
+        reason: makeReason(item),
+      }));
+
+    return NextResponse.json({ query, page, offers });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    console.error("Search error:", error);
+    return NextResponse.json({ error: "Search failed" }, { status: 500 });
   }
+}
+
+function makeReason(item: any) {
+  const parts = [];
+
+  if (item.price) parts.push(`Listed at ${item.price}`);
+  if (item.rating) parts.push(`rated ${item.rating}/5`);
+  if (item.reviews) parts.push(`${item.reviews} reviews`);
+  if (item.delivery) parts.push(item.delivery);
+
+  return parts.length ? parts.join(" • ") : "Matched your search.";
 }
