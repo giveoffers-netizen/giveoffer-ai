@@ -29,12 +29,22 @@ export async function POST(req: NextRequest) {
           {
             role: "system",
             content:
-              "You extract products/services from quotes, invoices, bills, and receipts. Return only valid JSON.",
+              "You extract products and services from quotes, invoices, bills, and receipts. Return only valid JSON.",
           },
           {
             role: "user",
             content: `
-Extract products/services from this quote text.
+Extract products/services from this text.
+
+For products: create a shopping search query.
+For services/bills: create a search query to find cheaper alternative plans/providers.
+
+Examples:
+Cable TV Service -> cheaper cable TV service plans
+Phone Service -> cheaper phone service plans
+Internet Service -> cheaper internet plans
+Window quote -> bifold window better price
+Door quote -> interior door better price
 
 Return JSON only in this exact format:
 {
@@ -45,7 +55,7 @@ Return JSON only in this exact format:
       "name": "product or service name",
       "quantity": "quantity if found",
       "price": "price if found",
-      "searchQuery": "short Google Shopping search query"
+      "searchQuery": "best search query to find a better price or cheaper alternative"
     }
   ]
 }
@@ -70,6 +80,7 @@ ${text}
     const content = data.choices?.[0]?.message?.content || "{}";
 
     let parsed;
+
     try {
       parsed = JSON.parse(content);
     } catch {
