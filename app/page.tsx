@@ -16,6 +16,7 @@ export default function Home() {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
+    setQuery(searchQuery);
 
     const res = await fetch('/api/search', {
       method: 'POST',
@@ -29,6 +30,10 @@ export default function Home() {
     setLastQuery(searchQuery);
     setPage(pageNumber);
     setLoading(false);
+
+    setTimeout(() => {
+      document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleSearch = (e: any) => {
@@ -42,6 +47,7 @@ export default function Home() {
 
     setUploading(true);
     setUploadResult(null);
+    setResults([]);
 
     const formData = new FormData();
     formData.append('file', file);
@@ -99,9 +105,10 @@ export default function Home() {
 
           {uploadResult && (
             <div style={styles.resultBox}>
-              <strong>File:</strong> {uploadResult.fileName}
+              <strong>File:</strong> {uploadResult.fileName || ''}
               <br />
-              <strong>Status:</strong> Uploaded successfully
+              <strong>Status:</strong>{' '}
+              {uploadResult.error ? uploadResult.error : 'Uploaded successfully'}
               <br />
               <br />
 
@@ -109,14 +116,24 @@ export default function Home() {
                 <div>
                   <h3>AI Found These Items</h3>
 
-                  <p><strong>Vendor:</strong> {uploadResult.analysis.vendor || 'Not found'}</p>
-                  <p><strong>Total:</strong> {uploadResult.analysis.total || 'Not found'}</p>
+                  <p>
+                    <strong>Vendor:</strong>{' '}
+                    {uploadResult.analysis.vendor || 'Not found'}
+                  </p>
+
+                  <p>
+                    <strong>Total:</strong>{' '}
+                    {uploadResult.analysis.total || 'Not found'}
+                  </p>
 
                   {(uploadResult.analysis.items || []).map((item: any, index: number) => (
                     <div key={index} style={styles.itemBox}>
                       <strong>{item.name}</strong>
                       <p>Quantity: {item.quantity || 'N/A'}</p>
                       <p>Price: {item.price || 'N/A'}</p>
+                      <p style={styles.smallText}>
+                        Search: {item.searchQuery || item.name}
+                      </p>
 
                       <button
                         style={styles.button}
@@ -152,7 +169,7 @@ export default function Home() {
         </form>
       </section>
 
-      <section style={styles.grid}>
+      <section id="results" style={styles.grid}>
         {results.map((item, i) => (
           <div key={i} style={styles.card}>
             {item.image && (
@@ -271,6 +288,10 @@ const styles: any = {
     background: '#fff',
     borderRadius: 12,
     border: '1px solid #eadfd2',
+  },
+  smallText: {
+    color: '#667085',
+    fontSize: 14,
   },
   pre: {
     whiteSpace: 'pre-wrap',
